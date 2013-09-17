@@ -32,16 +32,16 @@ One of the more complex models in this is the model for the todo list.
 The primary bit of data related to each todo item is its description.
 
 Each todo can optionally also have a priority. At the moment, the values for
-this are a hard-codedenum-type. The values are listed in reverse alphabetical
+this are a hard-coded-enum-type. The values are listed in reverse alphabetical
 order, because in this, `A` is "larger" than `E`, which is the minimal value.
 Ordering it this way should make sorting easier and more intuitive.
 
 Some other options for this data type may involve a newtype over a Int, Char,
 or other ordered type. This could then still derive the same set of type
-classes as it does here. This has the benefit of being more type-safe. For
-example, given a `Priority` constructor `P`, it's difficult to say exactly what
-`P (-42)` or `P '*'` mean (or even `P 'k'`, if `P 'j'` and others aren't
-defined).
+classes as it does here. But what I am currently doing has the benefit of being
+more type-safe. For example, given a `Priority` constructor `P`, it's difficult
+to say exactly what `P (-42)` or `P '*'` mean (or even `P 'k'`, if `P 'j'` and
+others aren't defined).
 
 > data Priority = E | D | C | B | A
 >         deriving (Show, Eq, Ord, Enum)
@@ -87,16 +87,22 @@ With all that in mind, the complete definition of the `ToDo` type is:
 >           } deriving (Show, Eq)
 > makeLenses ''ToDo
 
-  **TODO**: There needs to be some way of estimating and tracking progress. I'd
-  like to be able to use an exponential or Fibonacci scale for the estimate,
-  but a linear scale for the progress. Then I'd need to be able to translate
-  from one to the other. Seems like I can leverage some standard type classes
-  for this, but I need to figure out which ones. So for example, `F 6` would be
-  the sixth number in the Fibonacci sequence, or `L 8`, and `E 6` would be
-  $2^6$ or `L 64`. The difficult part would be translating the other way. `L 6`
-  would be slightly more than `F 5` and something like `E (5/2)`. Actually,
-  it's more complicated $2^(13/5)$ is quite a bit closer, though still not
-  exactly right.
+<blockquote>
+**TODO**: There needs to be some way of estimating and tracking progress. I'd
+like to be able to use an exponential or Fibonacci scale for the estimate,
+but a linear scale for the progress. Then I'd need to be able to translate
+from one to the other. Seems like I can leverage some standard type classes
+for this, but I need to figure out which ones. So for example, `F 6` would be
+the sixth number in the Fibonacci sequence, or `L 8`, and `E 6` would be
+$2^6$ or `L 64`. The difficult part would be translating the other way. `L 6`
+would be slightly more than `F 5` and something like `E (5/2)`. Actually,
+it's more complicated $2^{13/5}$ is quite a bit closer, though still not
+exactly right. </blockquote>
+
+<blockquote>
+**TODO**: I need to define `Ord` for the `ToDo` type that will order by
+priority, state, due date, and description. Need specs to nail down the exact
+semantics of this. </blockquote>
 
 Time Tracking
 -------------
@@ -107,5 +113,5 @@ Outliner
 Notes
 -----
 
-utctime: http://hackage.haskell.org/packages/archive/time/latest/doc/html/Data-Time-Clock.html
+[utctime]: http://hackage.haskell.org/packages/archive/time/latest/doc/html/Data-Time-Clock.html
 
