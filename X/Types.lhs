@@ -1,9 +1,9 @@
 
+> {-# LANGUAGE TemplateHaskell #-}
+
 Introduction
 ============
 
-> {-# LANGUAGE TemplateHaskell #-}
->
 > module X.Types where
 >
 > import           Data.Time
