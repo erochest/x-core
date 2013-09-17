@@ -87,6 +87,17 @@ With all that in mind, the complete definition of the `ToDo` type is:
 >           } deriving (Show, Eq)
 > makeLenses ''ToDo
 
+  **TODO**: There needs to be some way of estimating and tracking progress. I'd
+  like to be able to use an exponential or Fibonacci scale for the estimate,
+  but a linear scale for the progress. Then I'd need to be able to translate
+  from one to the other. Seems like I can leverage some standard type classes
+  for this, but I need to figure out which ones. So for example, `F 6` would be
+  the sixth number in the Fibonacci sequence, or `L 8`, and `E 6` would be
+  $2^6$ or `L 64`. The difficult part would be translating the other way. `L 6`
+  would be slightly more than `F 5` and something like `E (5/2)`. Actually,
+  it's more complicated $2^(13/5)$ is quite a bit closer, though still not
+  exactly right.
+
 Time Tracking
 -------------
 
