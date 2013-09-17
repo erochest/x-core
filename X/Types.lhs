@@ -5,11 +5,13 @@ Introduction
 
 > module X.Types where
 >
+> import           Data.Time
+>
 > import           Control.Lens hiding (Context)
 > import qualified Control.Lens as Lens
 > import qualified Data.HashSet as S
 > import qualified Data.Text as T
-> import           Data.Time
+> import           Text.URI
 
 This library encompasses a number of different funcations.
 
@@ -38,7 +40,8 @@ Some other options for this data type may involve a newtype over a Int, Char,
 or other ordered type. This could then still derive the same set of type
 classes as it does here. This has the benefit of being more type-safe. For
 example, given a `Priority` constructor `P`, it's difficult to say exactly what
-`P (-42)` or `P '!'` mean.
+`P (-42)` or `P '*'` mean (or even `P 'k'`, if `P 'j'` and others aren't
+defined).
 
 > data Priority = E | D | C | B | A
 >         deriving (Show, Eq, Ord, Enum)
@@ -65,6 +68,7 @@ The most complicated part of this is the state of the item. This type captures
 the life-cycle-slash-state-machine nature of the todo item.
 
 > data ToDoState = Someday
+>                | Pending
 >                | Active
 >                | Done UTCTime
 >                deriving (Show, Eq)
@@ -76,8 +80,10 @@ With all that in mind, the complete definition of the `ToDo` type is:
 >           , _todoState       :: ToDoState
 >           , _todoPriority    :: Maybe Priority
 >           , _todoCreated     :: UTCTime
+>           , _todoDue         :: Maybe UTCTime
 >           , _todoTags        :: TagSet
 >           , _todoContexts    :: ContextSet
+>           , _todoUris        :: [URI]
 >           } deriving (Show, Eq)
 > makeLenses ''ToDo
 
