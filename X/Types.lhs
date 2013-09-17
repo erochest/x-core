@@ -1,9 +1,12 @@
-
-> {-# LANGUAGE TemplateHaskell #-}
+% X.Types
+% Eric Rochester
+%
 
 Introduction
 ============
 
+> {-# LANGUAGE TemplateHaskell #-}
+>
 > module X.Types where
 >
 > import           Data.Time
