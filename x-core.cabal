@@ -3,8 +3,8 @@
 
 name:                x-core
 version:             0.0.0
-synopsis:            Core data types for a todo/time tracking/notes system.
-description:         Core data types for a todo/time tracking/notes system.
+synopsis:            Core data types for an opinionated GTD/todo/time tracking/notes system.
+description:         Core data types for an opinionated GTD/todo/time tracking/notes system.
 license:             Apache-2.0
 license-file:        LICENSE
 author:              Eric Rochester
