@@ -29,8 +29,8 @@ test-suite x-core-specs
   hs-source-dirs:      specs
   main-is:             Specs.hs
   build-depends:         base       == 4.6.*
-                       , hspec      == 1.6.*
-                       , QuickCheck == 2.6.*
+                       , hspec
+                       , QuickCheck
 
 source-repository this
   type:                git
