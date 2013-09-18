@@ -33,7 +33,8 @@ To Do List
 
 One of the more complex models in this is the model for the todo list.
 
-The primary bit of data related to each todo item is its description.
+The primary bit of data related to each todo item is its description. This is
+just a text field.
 
 Each todo can optionally also have a priority. At the moment, the values for
 this are a hard-coded-enum-type. The values are listed in reverse alphabetical
@@ -68,27 +69,70 @@ distinguishing them now will make this possible.
 > type Context    = T.Text
 > type ContextSet = S.HashSet Context
 
-The most complicated part of this is the state of the item. This type captures
-the life-cycle-slash-state-machine nature of the todo item.
+But the most complicated part of all of this, for a different kind of
+complexity, is the estimate notation. This can handle several different types
+of estimates: linear, Fibonacci, and exponential. They all can be converted to
+integral types by "downcasting" to a linear scale. Therefore, estimates can be
+in any integral type; however, progress tracking is only done with a linear
+scale. Therefore, the only useful, valid view of the data involves graphically
+displaying the amount done using a progress bar.
 
-> data ToDoState = Someday
->                | Pending
->                | Active
->                | Done UTCTime
->                deriving (Show, Eq)
+> data LinearEstimate = LE Int
+>         deriving (Show, Eq, Ord)
+> data FibEstimate    = FE Int
+>         deriving (Show, Eq, Ord)
+> data ExpEstimate    = EE Int
+>         deriving (Show, Eq, Ord)
+
+All of these are instances of an `Estimate` type class. Instances of this class
+just need to be able to convert themselves into a `LinearEstimate`.
+
+> class Estimate e where
+>     toLinear :: e -> LinearEstimate
+>
+> instance Estimate LinearEstimate where
+>     toLinear = id
+> instance Estimate FibEstimate where
+>     toLinear (FE n) = LE $ fibs !! n
+> instance Estimate ExpEstimate where
+>     toLinear (EE n) = LE . round . (2.0 **) $ fromIntegral n
+
+This is a potential memory leak, since we're never releasing the full cache 
+
+> fibs :: [Int]
+> fibs = ([1, 1] ++) . zipWith (+) fibs $ drop 1 fibs
+
+However, estimates aren't just for planning. They're also for tracking
+progress. For that, we'll use a `Progress` type that includes the `Estimate`
+for the projection and a `LinearEstimate` for the progress.
+
+> data Progress e = Progress
+>                 { _progress :: LinearEstimate
+>                 , _estimate :: e
+>                 } deriving (Show, Eq)
+> makeLenses ''Progress
+
+The progress is tracked in the status of a `ToDo` item as it moves through its
+life cycle.
+
+> data ToDoStatus e = Someday
+>                   | Pending (Progress e)
+>                   | Active (Progress e)
+>                   | Done (Progress e) UTCTime
+>                   deriving (Show, Eq)
 
 With all that in mind, the complete definition of the `ToDo` type is:
 
-> data ToDo = ToDo
->           { _todoDescription :: T.Text
->           , _todoState       :: ToDoState
->           , _todoPriority    :: Maybe Priority
->           , _todoCreated     :: UTCTime
->           , _todoDue         :: Maybe UTCTime
->           , _todoTags        :: TagSet
->           , _todoContexts    :: ContextSet
->           , _todoUris        :: [URI]
->           } deriving (Show, Eq)
+> data ToDo e = ToDo
+>             { _todoDescription :: T.Text
+>             , _todoStatus      :: ToDoStatus e
+>             , _todoPriority    :: Maybe Priority
+>             , _todoCreated     :: UTCTime
+>             , _todoDue         :: Maybe UTCTime
+>             , _todoTags        :: TagSet
+>             , _todoContexts    :: ContextSet
+>             , _todoUris        :: [URI]
+>             } deriving (Show, Eq)
 > makeLenses ''ToDo
 
 <blockquote>
@@ -116,6 +160,9 @@ Outliner
 
 Notes
 -----
+
+Bookmarks/Reading List
+----------------------
 
 [utctime]: http://hackage.haskell.org/packages/archive/time/latest/doc/html/Data-Time-Clock.html
 
