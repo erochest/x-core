@@ -4,7 +4,15 @@
 name:                x-core
 version:             0.0.0
 synopsis:            Core data types for an opinionated GTD/todo/time tracking/notes system.
-description:         Core data types for an opinionated GTD/todo/time tracking/notes system.
+description:
+  This is a library for an opinionated, idiosyncratic personal organization
+  system. Mine.
+
+  This package contains the core type system for the various parts. It's meant to
+  be small and tightly focused. It doesn't have anything about UI or persistence
+  or any other side effect. Those will be provided other packages that depend on
+  this one. This package will just make sure the others are consistent and using
+  the same data types.
 license:             Apache-2.0
 license-file:        LICENSE
 author:              Eric Rochester
