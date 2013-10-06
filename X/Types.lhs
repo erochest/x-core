@@ -6,9 +6,13 @@ Introduction
 ============
 
 > {-# LANGUAGE TemplateHaskell #-}
+> {-# LANGUAGE RecordWildCards #-}
+>
 >
 > module X.Types where
 >
+>
+> import           Data.Ord
 > import           Data.Time
 >
 > import           Control.Lens hiding (Context)
@@ -37,9 +41,7 @@ The primary bit of data related to each todo item is its description. This is
 just a text field.
 
 Each todo can optionally also have a priority. At the moment, the values for
-this are a hard-coded-enum-type. The values are listed in reverse alphabetical
-order, because in this, `A` is "larger" than `E`, which is the minimal value.
-Ordering it this way should make sorting easier and more intuitive.
+this are a hard-coded-enum-type.
 
 Some other options for this data type may involve a newtype over a Int, Char,
 or other ordered type. This could then still derive the same set of type
@@ -48,8 +50,8 @@ more type-safe. For example, given a `Priority` constructor `P`, it's difficult
 to say exactly what `P (-42)` or `P '*'` mean (or even `P 'k'`, if `P 'j'` and
 others aren't defined).
 
-> data Priority = E | D | C | B | A
->         deriving (Show, Eq, Ord, Enum)
+> data Priority = A | B | C | D | E
+>         deriving (Show, Eq, Ord, Enum, Bounded)
 
 There are a number of time fields---`todoCreated`, for example---and all are
 stored internally as [`Data.Time.UTCTime`][utctime]. They should be converted
@@ -109,17 +111,18 @@ for the projection and a `LinearEstimate` for the progress.
 > data Progress e = Progress
 >                 { _progress :: LinearEstimate
 >                 , _estimate :: e
->                 } deriving (Show, Eq)
+>                 } deriving (Show, Eq, Ord)
 > makeLenses ''Progress
 
 The progress is tracked in the status of a `ToDo` item as it moves through its
 life cycle.
 
-> data ToDoStatus e = Someday
->                   | Pending (Progress e)
->                   | Active (Progress e)
->                   | Done (Progress e) UTCTime
->                   deriving (Show, Eq)
+> data ToDoStatus e
+>     = Active (Progress e)
+>     | Pending (Progress e)
+>     | Someday
+>     | Done (Progress e) UTCTime
+>     deriving (Show, Eq, Ord)
 
 With all that in mind, the complete definition of the `ToDo` type is:
 
@@ -128,17 +131,53 @@ With all that in mind, the complete definition of the `ToDo` type is:
 >             , _todoStatus      :: ToDoStatus e
 >             , _todoPriority    :: Maybe Priority
 >             , _todoCreated     :: UTCTime
->             , _todoDue         :: Maybe UTCTime
+>             , _todoDue         :: Maybe Day
 >             , _todoTags        :: TagSet
 >             , _todoContexts    :: ContextSet
 >             , _todoUris        :: [URI]
 >             } deriving (Show, Eq)
 > makeLenses ''ToDo
 
-<blockquote>
-**TODO**: I need to define `Ord` for the `ToDo` type that will order by
-priority, state, due date, and description. Need specs to nail down the exact
-semantics of this. </blockquote>
+We'll need to sort `ToDo` items regularly, so we'll declare this an instance of
+`Data.Ord.Ord`. Ordering these will be fairly complex, so we won't attempt to
+use an automatically created instance.
+
+`ToDo` items sort by:
+
+1. Status;
+1. Priority;
+1. Due Date; and
+1. Description.
+
+First, we create a short utility function that chains the calls to `compare`
+properly. Because of lazy execution, this short-circuits.
+
+> (<?>) :: Ordering -> Ordering -> Ordering
+> (<?>) LT _    = LT
+> (<?>) GT _    = GT
+> (<?>) EQ next = next
+
+And this will make pulling the fields out of the records marginally easier.
+
+> compareOn :: Ord a => (ToDo e -> a) -> ToDo e -> ToDo e -> Ordering
+> compareOn getter a b = getter a `compare` getter b
+
+Unfortunately, the `Maybe` wrapper around the priority and due date won't get
+ordered correctly naturally. By default, `Just` constructors always come last,
+but we want them to come first. When you want something done right, sometimes
+you have to just do it yourself.
+
+> reorderMaybe :: Ord a => Maybe a -> Maybe a -> Ordering
+> reorderMaybe Nothing  Nothing  = EQ
+> reorderMaybe (Just a) (Just b) = compare a b
+> reorderMaybe (Just _) Nothing  = LT
+> reorderMaybe Nothing  (Just _) = GT
+
+> instance Ord e => Ord (ToDo e) where
+>     compare a b =   (compareOn _todoStatus      a b)
+>                 <?> (reorderMaybe (_todoPriority a) (_todoPriority b))
+>                 <?> (reorderMaybe (_todoDue      a) (_todoDue      b))
+>                 <?> (compareOn _todoDescription a b)
 
 Time Tracking
 -------------
