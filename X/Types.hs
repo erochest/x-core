@@ -149,6 +149,8 @@ data ToDo e = ToDo
             } deriving (Show, Eq)
 makeLenses ''ToDo
 
+type LinearToDo = ToDo LinearEstimate
+
 {-
  - We'll need to sort `ToDo` items regularly, so we'll declare this an instance of
  - `Data.Ord.Ord`. Ordering these will be fairly complex, so we won't attempt to
@@ -199,6 +201,21 @@ instance Ord e => Ord (ToDo e) where
 {-
  - Time Tracking
  - -------------
+ -
+ - This allows us to track time as we're doing things. This means that the
+ - ending time is optional. It can also be optionally linked to a `ToDo` item.
+ -}
+
+data WorkLog a = WorkLog
+               { _logDescription :: T.Text
+               , _logTags        :: TagSet
+               , _logStartTime   :: UTCTime
+               , _logEndTime     :: Maybe UTCTime
+               , _logToDo        :: Maybe (ToDo a)
+               } deriving (Show, Eq)
+makeLenses ''WorkLog
+
+{-
  - 
  - Outliner
  - --------
